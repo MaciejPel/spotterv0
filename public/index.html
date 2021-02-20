@@ -4,42 +4,45 @@
 	<title>Example of the Authorization Code flow with Spotify</title>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/grade-js/1.0.10/grade.min.js" crossorigin="anonymous"></script>
+    <script src="grade.min.js" crossorigin="anonymous"></script>
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/grade-js/1.0.10/grade.min.js" crossorigin="anonymous"></script> -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 	<link rel="preconnect" href="https://fonts.gstatic.com">
 	<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@700&display=swap" rel="stylesheet">
 	<style type="text/css">
+		body{animation: blinds 1s ease-in-out infinite alternate;}
 		#login, #loggedin {display: none;}
 		.text-overflow {overflow: hidden;text-overflow: ellipsis;white-space: nowrap;width: 500px;}
-      	html, body {height: 100%;}
+      	html, body,#backgroundGradient {height: 100%;}
 		p,span{font-family: 'Source Sans Pro', sans-serif;}
 		img{box-shadow: 0px 3px 8px rgb(8, 8, 8);}
     </style>
 </head>
-<body id="body" style="background-color:#414141; color:white;">
-	<div class="container">
-		<div id="login">
-			<h1>This is an example of the Authorization Code flow</h1>
-			<a href="/login" class="btn btn-success">Log in with Spotify</a>
+<body style="color:white;">
+	<div style="background-image: -webkit-linear-gradient(135deg,rgb(0,0,0) 0%,rgb(30,215,96) 75%);" id="backgroundGradient">
+		<div class="container">
+			<div id="login">
+				<h1>This is an example of the Authorization Code flow</h1>
+				<a href="/login" class="btn btn-success">Log in with Spotify</a>
+			</div>
+			<div id="loggedin">
+				<div id="user-profile"></div>
+			</div>
 		</div>
-		<div id="loggedin">
-			<div id="user-profile"></div>
-		</div>
-	</div>
 
-    <center>
-		<div class="mx-auto" style="width:100%">
-			<br>
-			<button id="getSong" class="btn btn-success">What am I listening to?</button>
-		</div>
-		<div id="imageLoad">
-		</div>
-    </center>
+    	<center>
+			<div class="mx-auto" style="width:100%">
+				<br>
+				<button id="getSong" class="btn btn-success">What am I 	listening to?</button>
+			</div>
+			<div id="imageLoad">
+			</div>
+    	</center>
+	</div>
 </body>
 <script>
 	(function() {
 		$('#getSong').on('click', function(){
-			Grade(document.querySelectorAll('#body'))
 		})
         /**
         * Obtains parameters from the hash of the URL
@@ -73,30 +76,37 @@
 						$('#loggedin').show();
 					}
 				});
-			} 
+			}
 			else {
 				$('#login').show();
 				$('#loggedin').hide();
 			}
-
+			let current;
 			$('#getSong').on('click', function() {
-				$('#imageLoad').hide('fast');
 				$.ajax({
 					url: 'https://api.spotify.com/v1/me/player/currently-playing',
 					headers: {'Authorization': 'Bearer ' + access_token},
 					success: function(response) {
-						console.log(response.item.name+' '+response.item.artists[0].name)
-						$.ajax({
-							url: 'https://api.spotify.com/v1/albums/' + response.item.album.id,
-							headers: {'Authorization': 'Bearer ' + access_token},
-							success: function(resp) {
-								let getImage=resp.images[0].url
-								console.log(resp.images[0])
-								$("#imageLoad").children().remove();
-								$("#imageLoad").append('<br><br><br><br><br><br><img width="640" height="640" crossorigin="anonymous" src="'+getImage+'" alt="Błąd ładowania"><br><br><p style="font-size:32px">'+response.item.name+'</p><span style="font-size:20px;color:grey">'+response.item.artists[0].name+'</span>');
-								$('#imageLoad').show('fast');
-							}
-						})
+						if(response.item.name+' '+response.item.artists[0].name==current){
+							return 0;
+						}
+						else{
+							$('#imageLoad').fadeOut(100);
+							current=response.item.name+' '+response.item.artists[0].name;
+							$.ajax({
+								url: 'https://api.spotify.com/v1/albums/' + response.item.album.id,
+								headers: {'Authorization': 'Bearer ' + access_token},
+								success: function(resp) {
+									setTimeout(() => {
+										let getImage=resp.images[0].url
+										$("#imageLoad").children().remove();
+										$("#imageLoad").append('<br><br><br><br><br><br><img width="640" height="640" crossorigin="anonymous" src="'+getImage+'" alt="Błąd ładowania"><br><br><p style="font-size:32px">'+response.item.name+'</p><span style="font-size:20px;color:grey">'+response.item.artists[0].name+'</span>');
+										$('#imageLoad').fadeIn('fast');
+										Grade(document.querySelectorAll('#backgroundGradient')); 
+									}, 100);
+								}
+							})
+						}
 					}
 				})
 			})
